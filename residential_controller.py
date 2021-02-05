@@ -7,15 +7,19 @@ class Column:
         self.amountOfFloors = amountOfFloors
         self.elevatorsList = []
         self.callButtonsList = []
+        
         self.makeElevator(amountOfElevators, amountOfFloors) #Calling the method to create elevators
         self.makeCallButtons(amountOfFloors) #Calling the method to create call buttons
 
     #Method to create elevators
     def makeElevator(self, amountOfElevators, amountOfFloors):
-        for elevatorID in range(amountOfElevators):
+        elevatorID = 1
+        for i in range(amountOfElevators):
             elevator = Elevator(elevatorID, 'idle', amountOfFloors, 1)
             self.elevatorsList.append(elevator)
+            elevatorID += 1
 
+    #Method to create call buttons
     def makeCallButtons(self, amountOfFloors):
         callButtonId = 1
         callButtonFloor = 1
@@ -49,23 +53,23 @@ class Column:
     def findBestElevator(self, floor, direction):
         requestedFloor = floor
         requestedDirection = direction
-        bestelevator = None
+        bestElevator = None
         bestScore = 5
         referenceGap = 1000000
-        bestElevatorInfo = [bestelevator, bestScore, referenceGap]
+        bestElevatorInfo = [bestElevator, bestScore, referenceGap]
 
         for elevator in self.elevatorsList:
             #Elevator is at floor going in correct direction
-            if (requestedFloor == elevator.currentFloor and elevator.status == 'stopped' and requestedDirection == elevator.direction):
+            if requestedFloor == elevator.currentFloor and elevator.status == 'stopped' and requestedDirection == elevator.direction:
                 bestElevatorInfo = self.checkBestElevator(1, elevator, bestElevatorInfo, requestedFloor)
             #Elevator is lower than user and moving through them to destination
-            elif (requestedFloor > elevator.currentFloor and elevator.direction == 'up' and requestedDirection == elevator.direction):
+            elif requestedFloor > elevator.currentFloor and elevator.direction == 'up' and requestedDirection == elevator.direction:
                 bestElevatorInfo = self.checkBestElevator(2, elevator, bestElevatorInfo, requestedFloor)
             #Elevator is higher than user and moving through them to destination
-            elif (requestedFloor < elevator.currentFloor and elevator.direction == 'down' and requestedDirection == elevator.direction):
+            elif requestedFloor < elevator.currentFloor and elevator.direction == 'down' and requestedDirection == elevator.direction:
                 bestElevatorInfo = self.checkBestElevator(2, elevator, bestElevatorInfo, requestedFloor)
             #Elevator is idle
-            elif (elevator.status == 'idle'):
+            elif elevator.status == 'idle':
                 bestElevatorInfo = self.checkBestElevator(3, elevator, bestElevatorInfo, requestedFloor)
             #Elevator is last resort
             else:
@@ -75,13 +79,14 @@ class Column:
     #Comparing elevator to previous best
     def checkBestElevator(self, scoreToCheck, newElevator, bestElevatorInfo, floor):
         #If elevators situation is more favourable, set to best elevator
-        if (scoreToCheck < bestElevatorInfo[1]):
+        if scoreToCheck < bestElevatorInfo[1]:
             bestElevatorInfo[1] = scoreToCheck
             bestElevatorInfo[0] = newElevator
             bestElevatorInfo[2] = abs(newElevator.currentFloor - floor)
+        #If elevators are in a similar situation, set the closest one to the best elevator
         elif (bestElevatorInfo[1] == scoreToCheck):
             gap = abs(newElevator.currentFloor - floor)
-            if (bestElevatorInfo[2] > gap):
+            if bestElevatorInfo[2] > gap:
                 bestElevatorInfo[1] = scoreToCheck
                 bestElevatorInfo[0] = newElevator
                 bestElevatorInfo[2] = gap
@@ -103,6 +108,7 @@ class Elevator:
         self.floorRequestList = []
         self.makeFloorRequestButton(amountOfFloors) #Calling the method to create the floor request buttons
 
+    #Method to create floor request buttons
     def makeFloorRequestButton(self, amountOfFloors):
         floorRequestButtonFloor = 1
         for i in range(amountOfFloors):
@@ -119,7 +125,7 @@ class Elevator:
         self.moveElevator()
         print(f'Elevator is {self.status}.')
         self.doorController()
-        if (len(self.floorRequestList) == 0):
+        if len(self.floorRequestList) == 0:
             self.direction = None
             self.status = 'idle'
         print(f'Elevator is {self.status}.')
@@ -191,7 +197,11 @@ class Door:
         self.ID = id
         self.status = status
 
+#Defining scenario 1
 def scenario1():
+    #In scenario 1, an individual is on floor 3, going up to floor 7.
+    #Elevator 1 is at floor 2, and Elevator 2 is at floor 6.
+    #Elevator 1 will be sent.
     column = Column(1, 'online', 2, 10)
 
     column.elevatorsList[0].currentFloor = 2
@@ -200,7 +210,17 @@ def scenario1():
     elevator = column.requestElevator(3, 'up')
     elevator.requestFloor(7)
 
+#Defining scenario 2
 def scenario2():
+    #In scenario 2, an individual is on floor 1, going up to floor 6.
+    #Elevator 1 is at floor 10, and Elevator 2 is at floor 3.
+    #Elevator 2 will be sent.
+    #An individial is on floor 3, going up to floor 5.
+    #Elevator 1 is at floor 10, and Elevator 2 is at floor 6.
+    #Elevator 2 will be sent.
+    #An individial is on floor 9, going down to floor 2.
+    #Elevator 1 is at floor 10, and Elevator 2 is at floor 5.
+    #Elevator 1 will be sent.
     column = Column(1, 'online', 2, 10)
 
     column.elevatorsList[0].currentFloor = 10
@@ -221,7 +241,14 @@ def scenario2():
     elevator = column.requestElevator(9, 'down')
     elevator.requestFloor(2)
 
+#Defining scenario 3
 def scenario3():
+    #In scenario 2, an individual is on floor 3, going down to floor 2.
+    #Elevator 1 is at floor 10, and Elevator 2 is moving from floor 3 to 6.
+    #Elevator 1 will be sent.
+    #An individial is on floor 10, going down to floor 3.
+    #Elevator 1 is at floor 10, and Elevator 2 is at floor 6.
+    #Elevator 2 will be sent.
     column = Column(1, 'online', 2, 10)
 
     column.elevatorsList[0].currentFloor = 10
